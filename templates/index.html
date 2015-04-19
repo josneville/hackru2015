@@ -1,0 +1,79 @@
+<html ng-app="main-app">
+	<head>
+		<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+		<link href="/static/css/flat-ui.min.css" rel="stylesheet">
+		<link href="/static/css/loading-bar.css" rel="stylesheet">
+		<link href="https://api.tiles.mapbox.com/mapbox.js/v2.1.8/mapbox.css" rel="stylesheet">
+		<link href="/static/css/style.css" rel="stylesheet">
+	</head>
+	<body ng-controller="main">
+		<div class='col-xs-4 nope'>
+			<div class="search-box">
+				<div class="todo-search">
+					<input type="text" class="search" ng-model="query" ng-enter="search()">
+				</div>
+			</div>
+			<div class="search-options">
+				<p>Free Hours: </p>
+				<input type="number" ng-model="hours">
+				<p>Budget: </p>
+				<input type="number" ng-model="budget">
+			</div>
+			<div id="divider">
+			</div>
+			<div id="results">
+
+			</div>
+		</div>
+		<div class="col-xs-8 nope">
+			<div id="map" style="height: 100%"></div>
+		</div>
+		<script src="/static/js/jquery.min.js"></script>
+		<script src="/static/js/bootstrap.min.js"></script>
+		<script src="/static/js/flat-ui.min.js"></script>
+		<script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.8/mapbox.js'></script>
+
+		<script src="/static/js/angular.min.js"></script>
+		<script src="/static/js/loading-bar.js"></script>
+		<script>
+		</script>
+		<script>
+			var app = angular.module('main-app', ['angular-loading-bar']);
+			app.controller('main', function($scope, $window, $http){
+				L.mapbox.accessToken = 'pk.eyJ1IjoicmViZWNjYXNrb2xuaWNrIiwiYSI6IlNXS2otYTQifQ.W8EOzm6kiAy_RvWAYkGT1A';
+				var map = L.mapbox.map('map', 'rebeccaskolnick.lp6b09mk').setView([40.6441015744937, -73.7882455], 12);
+				$scope.query = "Civic Center, SF";
+				$scope.hours = 8;
+				$scope.budget = 100;
+				$scope.search = function(){
+					if ($scope.query && $scope.hours && $scope.budget){
+						$http({
+							method: "POST",
+							url: "/api/demo",
+							data: {location: $scope.query, hours: $scope.hours, budget: $scope.budget}
+						})
+						.success(function(data, status, headers, config){
+							$scope.data = data;
+							console.log(data);
+						})
+						.error(function(data, status, headers, config){
+							console.log("Oh nyooooooo");
+						})
+					}
+				}
+			})
+			.directive('ngEnter', function () {
+			  return function (scope, element, attrs) {
+			  	element.bind("keydown keypress", function (event) {
+						if(event.which === 13) {
+							scope.$apply(function (){
+								scope.$eval(attrs.ngEnter);
+							});
+							event.preventDefault();
+						}
+					});
+				};
+			});
+		</script>
+	</body>
+</html>
