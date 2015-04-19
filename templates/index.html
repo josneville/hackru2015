@@ -22,7 +22,18 @@
 			<div id="divider">
 			</div>
 			<div id="results">
-
+				{% raw %}
+				<div ng-repeat="result in data" class="row result ng-class:{'active': $index==current}" ng-click="setCurrent($index)">
+					<div class="col-xs-6">
+						<h4>Itinerary {{$index+1}}</h4>
+						<h6>Uber Cost: ${{result.cost}}</h6>
+						<h6>Duration: {{result.duration|toHours}}</h6>
+					</div>
+					<div class="col-xs-6 extraP">
+						<p ng-repeat="node in result.nodes" ng-hide="$index==0">{{node.name}}</p>
+					</div>
+				</div>
+				{% endraw %}
 			</div>
 		</div>
 		<div class="col-xs-8 nope">
@@ -42,9 +53,43 @@
 			app.controller('main', function($scope, $window, $http){
 				L.mapbox.accessToken = 'pk.eyJ1IjoicmViZWNjYXNrb2xuaWNrIiwiYSI6IlNXS2otYTQifQ.W8EOzm6kiAy_RvWAYkGT1A';
 				var map = L.mapbox.map('map', 'rebeccaskolnick.lp6b09mk').setView([40.6441015744937, -73.7882455], 12);
-				$scope.query = "Civic Center, SF";
+				var layerGroup = L.layerGroup().addTo(map);
+				$scope.query = "JFK";
 				$scope.hours = 8;
 				$scope.budget = 100;
+				$scope.current = 0;
+				$scope.data = [];
+				$scope.setCurrent = function(i){
+					$scope.current = i;
+					$scope.setMarkers();
+				}
+				$scope.setMarkers = function(){
+					layerGroup.clearLayers();
+					var current = $scope.current;
+					for (var i = 0; i < $scope.data[current].nodes.length; i++){
+						var color = '#BE9A6B';
+						if (i == 0){
+							color = '#34495e';
+						}
+						L.mapbox.featureLayer({
+							type: 'Feature',
+							geometry: {
+									type: 'Point',
+									coordinates: [
+										$scope.data[current].nodes[i].lon,
+										$scope.data[current].nodes[i].lat
+									]
+							},
+							properties: {
+									title: $scope.data[current].nodes[i].name,
+									description: $scope.data[current].nodes[i].url,
+									'marker-color': color,
+									'marker-symbol': (i + 1).toString()
+							}
+						}).addTo(layerGroup);
+					}
+					map.setView([$scope.data[current].nodes[0].lat, $scope.data[current].nodes[0].lon], 14)
+				}
 				$scope.search = function(){
 					if ($scope.query && $scope.hours && $scope.budget){
 						$http({
@@ -54,7 +99,7 @@
 						})
 						.success(function(data, status, headers, config){
 							$scope.data = data;
-							console.log(data);
+							$scope.setMarkers();
 						})
 						.error(function(data, status, headers, config){
 							console.log("Oh nyooooooo");
@@ -72,6 +117,14 @@
 							event.preventDefault();
 						}
 					});
+				};
+			})
+			.filter('toHours', function(){
+				return function(s){
+					var minutes = Math.floor(s/60)
+					var hour = Math.floor(minutes/60);
+					var left = minutes - hour*60
+					return hour + "Hrs " + left + "Mins"
 				};
 			});
 		</script>

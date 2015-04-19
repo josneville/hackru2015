@@ -59,5 +59,37 @@
   height: 100%;
   width: 100%;
   background-color: #34495e;
+  margin-top: 0;
+  padding: 0;
+}
 
+.result{
+  color: white;
+  border: 1px solid black;
+  padding-left: 25px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.result h4{
+  padding: 0;
+}
+
+.result h6{
+  padding: 0;
+  font-size: 16px;
+}
+
+.result p{
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+}
+
+.extraP{
+  margin-top: 20px;
+}
+
+.active{
+  background-color: #2C3E50;
 }

@@ -2,11 +2,14 @@ from flask import Flask, request, render_template
 from yelpapi import YelpAPI
 from py2neo import Graph, Node, Relationship, Rel, Rev
 from py2neo.packages.httpstream import http
+from flask.ext.triangle import Triangle
+
 http.socket_timeout = 9999
 import json
 import requests
 
 app = Flask(__name__)
+Triangle(app)
 graph = Graph("http://neo4j:bananaman@localhost:7474/db/data")
 yelp = YelpAPI('yJPSDGnLa0cmp8i5McqgkQ', 'MmRPkj-q_0BBg2TM8Lr3xvBcXi8', 'PuondDF9UNF2Flpdq_FA3j_jnIzoG8ny', 'XqaafOSHDZijNLOweCroHXnjHUQ')
 uber_key = '7wEGBplbyDuptVTyrqOyOk0fasOB-Xvd5xYqWN79'
@@ -23,8 +26,8 @@ def test_page():
 def find():
 	nodes = []
 	location = request.form["location"]
-	results = yelp.search_query(term = '', location=location, sort = 2)
-	graph.cypher.execute("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r")
+	results = yelp.search_query(term = '', location=location, sort = 2, limit=20)
+	#graph.cypher.execute("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r")
 	businesses = results["businesses"]
 	start = Node("Start", name = location, lat=results["region"]["center"]["latitude"], lon=results["region"]["center"]["longitude"], duration = 0)
 	graph.create(start)
@@ -85,7 +88,7 @@ def demo():
 	seconds = str(hours * 3600)
 	paths = []
 	prevs = []
-	query = 'START n = node(*) WHERE n.name = "'+location+'" MATCH p=n-[r:Travel*2..6]-n WHERE ALL(q in nodes(p) WHERE 1>=length(filter(m in nodes(p) WHERE m<>n AND m=q))) AND 2=length(filter(m in nodes(p) WHERE m=n)) WITH REDUCE(acc=0, rel IN r | acc+rel.duration) AS totalRel, p, REDUCE(acc=0, nod in nodes(p) | acc+nod.duration) AS totalNod, REDUCE(acc=0, rel IN r | acc+rel.cost) AS totalCost WITH p, totalCost, totalNod + totalRel AS totalDuration WHERE totalDuration < '+seconds+' AND totalCost < '+budget+' RETURN p, totalDuration, totalCost ORDER BY totalDuration DESC LIMIT 20'
+	query = 'START n = node(*) WHERE n.name = "'+location+'" MATCH p=n-[r:Travel*2..5]-n WHERE ALL(q in nodes(p) WHERE 1>=length(filter(m in nodes(p) WHERE m<>n AND m=q))) AND 2=length(filter(m in nodes(p) WHERE m=n)) WITH REDUCE(acc=0, rel IN r | acc+rel.duration) AS totalRel, p, REDUCE(acc=0, nod in nodes(p) | acc+nod.duration) AS totalNod, REDUCE(acc=0, rel IN r | acc+rel.cost) AS totalCost WITH p, totalCost, totalNod + totalRel AS totalDuration WHERE totalDuration < '+seconds+' AND totalCost < '+budget+' RETURN p, totalDuration, totalCost, COUNT(nodes(p)) AS nc ORDER BY totalDuration DESC, totalCost LIMIT 15'
 	print query
 	for record in graph.cypher.execute(query):
 		nodes = []
